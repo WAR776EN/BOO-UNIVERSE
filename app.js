@@ -1,15 +1,21 @@
 'use strict';
+const { dbInit, loadRoutes, serverConfig } = require('./app.config');
 
-const express = require('express');
-const app = express();
-const port =  process.env.PORT || 3000;
-const MongoClient = require('mongodb').MongoClient
-// set the view engine to ejs
-app.set('view engine', 'ejs');
+// Initialize database
+dbInit().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
 
-// routes
-app.use('/profile', require('./routes/profile')());
+const { app, port } = serverConfig();
+loadRoutes(app);
 
-// start server
-const server = app.listen(port);
-console.log('Express started. Listening on %s', port);
+// Only start server if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  const server = app.listen(port);
+  console.log('Express started. Listening on %s', port);
+  module.exports = server;
+} else {
+  // Export app for testing
+  module.exports = app;
+}
